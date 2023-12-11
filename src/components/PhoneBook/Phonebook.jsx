@@ -1,89 +1,76 @@
-import { Component } from "react";
-import styles from './Phonebook.module.css';
+import React, { useState, useEffect } from "react";
+import styles from "./Phonebook.module.css";
 import ContactForm from "./Refactor/ContactForm";
 import Filter from "./Refactor/Filter";
 import ContactList from "./Refactor/ContactList";
-import { nanoid } from 'nanoid';
+import { nanoid } from "nanoid";
 
-class Phonebook extends Component {
-  state = {
-    contacts: [],
-    filter: '',
-    name: '',
-    number: '',
-    showDeleted: false,
-  }
-  componentDidMount() {
-    const storedContacts = localStorage.getItem('contacts');
+const Phonebook = () => {
+  const [contacts, setContacts] = useState([]);
+  const [filter, setFilter] = useState("");
+  const [name, setName] = useState("");
+  const [number, setNumber] = useState("");
+  const [showDeleted] = useState(false);
+
+  useEffect(() => {
+    const storedContacts = localStorage.getItem("contacts");
     if (storedContacts) {
-      this.setState({ contacts: JSON.parse(storedContacts) });
+      setContacts(JSON.parse(storedContacts));
     }
-  }
+  }, []);
 
-  componentDidUpdate(prevProps, prevState) {
-    if (prevState.contacts !== this.state.contacts) {
-      localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
-    }
-  }
+  useEffect(() => {
+    localStorage.setItem("contacts", JSON.stringify(contacts));
+  }, [contacts]);
 
-
-  change = (e) => {
+  const change = (e) => {
     const { name, value } = e.target;
-    this.setState({ [name]: value });
-  }
+    if (name === "name") {
+      setName(value);
+    } else if (name === "number") {
+      setNumber(value);
+    }
+  };
 
-  submit = (e) => {
+  const submit = (e) => {
     e.preventDefault();
-    const { name, contacts } = this.state;
-    if (contacts.some(contact => contact.name.toLowerCase() === name.toLowerCase())) {
+    if (contacts.some((contact) => contact.name.toLowerCase() === name.toLowerCase())) {
       alert(`${name} is already in contacts`);
       return;
     }
     const newContact = {
       id: nanoid(),
-      name: this.state.name,
-      number: this.state.number,
+      name: name,
+      number: number,
     };
 
-    this.setState(prevState => ({
-      contacts: [...prevState.contacts, newContact],
-      name: '',
-      number: '',
-    }));
-  }
+    setContacts((prevContacts) => [...prevContacts, newContact]);
+    setName("");
+    setNumber("");
+  };
 
-  deleteContact = (id) => {
-    this.setState(prevState => ({
-      contacts: prevState.contacts.filter(contact => contact.id !== id),
-    }));
-  }
+  const deleteContact = (id) => {
+    setContacts((prevContacts) => prevContacts.filter((contact) => contact.id !== id));
+  };
 
-  filter = (value) => {
-    this.setState({ filter: value });
-  }
+  const handleFilterChange = (value) => {
+    setFilter(value);
+  };
 
-  render() {
-    const { contacts, filter, showDeleted } = this.state;
-    const filteredContacts = showDeleted
-      ? contacts
-      : contacts.filter(contact => contact.name.toLowerCase().includes(filter.toLowerCase()));
+  const filteredContacts = showDeleted
+    ? contacts
+    : contacts.filter((contact) => contact.name.toLowerCase().includes(filter.toLowerCase()));
 
-    return (
-      <div className={styles.container}>
-        <h1>Phonebook</h1>
-        <ContactForm
-          name={this.state.name}
-          number={this.state.number}
-          onChange={this.change}
-          onSubmit={this.submit}
-        />
+  return (
+    <div className={styles.container}>
+      <h1>Phonebook</h1>
+      <ContactForm name={name} number={number} onChange={change} onSubmit={submit} />
 
-        <h2>Contacts</h2>
-        <Filter value={filter} onChange={this.filter} />
-        <ContactList contacts={filteredContacts} deleteContact={this.deleteContact} />
-      </div>
-    );
-  }
-}
+      <h2>Contacts</h2>
+      <Filter value={filter} onChange={handleFilterChange} />
+      <ContactList contacts={filteredContacts} deleteContact={deleteContact} />
+    </div>
+  );
+};
 
 export default Phonebook;
